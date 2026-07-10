@@ -1,0 +1,7 @@
+Verifique se a imagem do documento acadêmico contém assinatura institucional.
+
+Retorne exclusivamente JSON válido neste formato:
+
+{
+  "assinaturas": "TRUE, FALSE ou null"
+}

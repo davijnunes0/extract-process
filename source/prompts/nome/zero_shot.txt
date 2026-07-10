@@ -1,0 +1,7 @@
+Extraia da imagem do documento acadêmico somente o nome completo do titular, diplomado, concluinte ou aluno.
+
+Retorne exclusivamente JSON válido neste formato:
+
+{
+  "nome": "nome completo ou null"
+}

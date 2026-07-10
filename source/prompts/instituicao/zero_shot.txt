@@ -1,0 +1,7 @@
+Extraia da imagem do documento acadêmico somente o nome da instituição de ensino emissora.
+
+Retorne exclusivamente JSON válido neste formato:
+
+{
+  "instituicao": "nome da instituição ou null"
+}

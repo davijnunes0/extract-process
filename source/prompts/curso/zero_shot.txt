@@ -1,0 +1,7 @@
+Extraia da imagem do documento acadêmico somente o nome do curso, programa ou área de formação.
+
+Retorne exclusivamente JSON válido neste formato:
+
+{
+  "curso": "nome do curso ou null"
+}
