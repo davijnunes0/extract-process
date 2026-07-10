@@ -2,25 +2,22 @@ import os
 from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
-from bson.json_util import dumps
-from dotenv import load_dotenv
 
+from bson.json_util import dumps
+
+from dotenv import load_dotenv
 from source.controller.execute_extraction import (
-    COURSE_FIELD_NAMES,
-    NAME_FIELD_NAMES,
-    SIGNATURES_FIELD_NAMES,
-    INSTITUTION_FIELD_NAME,
     execute_course_extraction,
     execute_name_extraction,
     execute_signatures_extraction,
     execute_university_extraction
 )
+from source.models.mongo_client import DbConnectionHandler
+from source.models.people_repository import PeopleRepository
 from source.services.ai_client import AiClient
 from source.services.evaluation_service import CourseExtractionEvaluator, load_answer_key
 from source.services.image_service import iter_image_paths
 from source.utils.console_formatter import format_result, format_summary
-from source.models.mongo_client import  DbConnectionHandler
-from source.models.people_repository import PeopleRepository
 
 load_dotenv()
 
@@ -35,41 +32,19 @@ client = AiClient(
     timeout=int(os.getenv("OPENAI_TIMEOUT_SECONDS", "1800")),
 )
 
+
 def main():
-    #extract_course()
-    #print("-=" * 300)
-    #extract_name()
+    extract_course()
+    print("\n", flush=True)
 
-    #extract_institution()
+    extract_name()
+    print("\n", flush=True)
 
-    db_handle : DbConnectionHandler = DbConnectionHandler()
-    db_handle.connect_to_db()
-    db_connection: Any = db_handle.get_db_connection()
+    extract_signature()
+    print("\n", flush=True)
 
-    peopleRepository : PeopleRepository = PeopleRepository(db_connection)
-
-    peopleRepository.insert_many_people(
-        [
-            {"name": "Carla Lemes", "email": "carlalemes@gmail.com"},
-            {"name": "Julia Pinheiro", "email": "juliapinheiro@gmail.com"},
-            {"name": "Isabelly Coelho", "email": "isabellycoelho@gmail.com"}
-        ]
-    )
-
-    list_people = [dumps(x,indent=4) for x in peopleRepository.select_people_all()]
-
-    for p in list_people:
-        print(p)
-        print("-=" * 100)
-
-    print("-=" * 100)
-
-    print(
-        peopleRepository.select_people_by_generic_filter(
-            {"name": "davijnunes"}
-        )
-    )
-
+    extract_institution()
+    print("\n", flush=True)
 
 def extract_course():
     results = collect_results(
@@ -97,7 +72,6 @@ def extract_name():
     return results
 
 
-
 def extract_signature():
     results = collect_results(
         execute_signatures_extraction(
@@ -109,6 +83,7 @@ def extract_signature():
     )
 
     return results
+
 
 def extract_institution():
     results = collect_results(
