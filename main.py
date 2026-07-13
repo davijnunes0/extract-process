@@ -7,6 +7,10 @@ from bson.json_util import dumps
 
 from dotenv import load_dotenv
 from source.controller.execute_extraction import (
+    COURSE_FIELD_NAMES,
+    INSTITUTION_FIELD_NAME,
+    NAME_FIELD_NAMES,
+    SIGNATURES_FIELD_NAMES,
     execute_course_extraction,
     execute_name_extraction,
     execute_signatures_extraction,
@@ -33,18 +37,25 @@ client = AiClient(
 )
 
 
-def main():
-    extract_course()
+def main() -> dict[str, list[dict]]:
+    course_results = extract_course()
     print("\n", flush=True)
 
-    extract_name()
-    print("\n", flush=True)
+    #name_results = extract_name()
+    #print("\n", flush=True)
 
-    extract_signature()
-    print("\n", flush=True)
+    #signature_results = extract_signature()
+    #print("\n", flush=True)
 
-    extract_institution()
-    print("\n", flush=True)
+    #institution_results = extract_institution()
+    #print("\n", flush=True)
+
+    return {
+        "curso": course_results,
+        "nome": name_results,
+        "assinaturas": signature_results,
+        "instituicao": institution_results,
+    }
 
 def extract_course():
     results = collect_results(
@@ -56,7 +67,7 @@ def extract_course():
         label="curso",
     )
 
-    return results
+    return evaluate_results(results, COURSE_FIELD_NAMES)
 
 
 def extract_name():
@@ -69,7 +80,7 @@ def extract_name():
         label="nome",
     )
 
-    return results
+    return evaluate_results(results, NAME_FIELD_NAMES)
 
 
 def extract_signature():
@@ -82,7 +93,7 @@ def extract_signature():
         label="assinatura"
     )
 
-    return results
+    return evaluate_results(results, SIGNATURES_FIELD_NAMES)
 
 
 def extract_institution():
@@ -95,7 +106,7 @@ def extract_institution():
         label="instituição",
     )
 
-    return results
+    return evaluate_results(results, INSTITUTION_FIELD_NAME)
 
 
 def collect_results(results: Iterable[dict], label: str) -> list[dict]:
@@ -109,6 +120,7 @@ def collect_results(results: Iterable[dict], label: str) -> list[dict]:
         error = result.get("error")
 
         collected_result = {
+            "documento": file_name,
             "document_name": file_name,
             "image_path": result.get("image_path"),
             "model": model,
@@ -138,14 +150,16 @@ def collect_results(results: Iterable[dict], label: str) -> list[dict]:
     return collected
 
 
-def evaluate_results(results: list[dict], field_names: Iterable[str]) -> None:
+def evaluate_results(results: list[dict], field_names: Iterable[str]) -> list[dict]:
     answer_key = load_answer_key(answer_key_path)
     evaluator = CourseExtractionEvaluator(answer_key, field_names=field_names)
+    evaluated_results = list(evaluator.evaluate_results(results))
 
-    for resultado in evaluator.evaluate_results(results):
+    for resultado in evaluated_results:
         print(format_result(resultado))
 
     print(format_summary(evaluator.summary()))
+    return evaluated_results
 
 
 if __name__ == "__main__":
