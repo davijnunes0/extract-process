@@ -35,7 +35,7 @@ from source.utils.console_formatter import (
 load_dotenv(Path(__file__).parent / "source" / ".env")
 
 DATASET_PATH: str = str(
-    Path(__file__).parent / "source" / "dataset-images" / "recortes_assinaturas_erros"
+    Path(__file__).parent / "source" / "dataset-images" / "recortes" / "erros" / "assinaturas"
 )
 ANSWER_KEY_PATH: str = str(Path(__file__).parent / "source" / "answer_key.js")
 
