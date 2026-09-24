@@ -25,7 +25,7 @@ class PeopleRepository:
         except (InvalidId, TypeError) as exc:
             raise ValueError("Invalid MongoDB ObjectId.") from exc
 
-    def insert_people(self, people:  Document) -> Document:
+    def insert_people(self, people: Document) -> Document:
         collection = self.__get_collection()
         person_to_insert = dict(people)
         result = collection.insert_one(person_to_insert)
@@ -60,7 +60,9 @@ class PeopleRepository:
         object_id = self.__parse_object_id(people_id)
         return collection.update_one({"_id": object_id}, {"$set": people})
 
-    def update_people_by_generic_filter(self, filters: MongoFilter, people: Document) -> UpdateResult:
+    def update_people_by_generic_filter(
+        self, filters: MongoFilter, people: Document
+    ) -> UpdateResult:
         collection = self.__get_collection()
         return collection.update_many(filters, {"$set": people})
 

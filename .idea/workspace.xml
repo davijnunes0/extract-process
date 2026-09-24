@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="b0485e58-c50c-42f7-8ecc-d109758d16d9" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pyproject.toml" beforeDir="false" afterPath="$PROJECT_DIR$/pyproject.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/controller/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/controller/execute_extraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/controller/execute_extraction.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/controller/extract_course.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/controller/extract_field.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/controller/extract_field.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/models/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/models/extraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/models/extraction.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/models/people_repository.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/models/people_repository.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/prompts/assinaturas/detailed_rules.txt" beforeDir="false" afterPath="$PROJECT_DIR$/source/prompts/assinaturas/detailed_rules.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/prompts/assinaturas/zero_shot.txt" beforeDir="false" afterPath="$PROJECT_DIR$/source/prompts/assinaturas/zero_shot.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/repository/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/services/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/services/ai_client.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/services/ai_client.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/services/evaluation_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/services/evaluation_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/services/image_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/services/image_service.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/utils/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/source/utils/console_formatter.py" beforeDir="false" afterPath="$PROJECT_DIR$/source/utils/console_formatter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/uv.lock" beforeDir="false" afterPath="$PROJECT_DIR$/uv.lock" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 8
+}]]></component>
+  <component name="ProjectId" id="3JiAhYoS6hj1AnCyl3iyvcf6cHY" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "nodejs_package_manager_path": "npm",
+    "python.packages.toolwindow.project.migrated.to.right.top.v2": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-4abd2a77f808-JavaScript-PY-262.10968.92" />
+        <option value="bundled-python-sdk-73a66231627c-5bd6d13a2a75-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-262.10968.92" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="b0485e58-c50c-42f7-8ecc-d109758d16d9" name="Changes" comment="" />
+      <created>1790133635703</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1790133635703</updated>
+      <workItem from="1790133637668" duration="2000" />
+    </task>
+    <servers />
+  </component>
+</project>

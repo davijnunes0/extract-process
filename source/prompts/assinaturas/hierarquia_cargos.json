@@ -1,0 +1,33 @@
+{
+  "descricao": "Hierarquia de cargos institucionais usada pelo Tesseract para recortar apenas a assinatura de maior prioridade. A ordem do array define a prioridade: o primeiro cargo com âncora localizada vence; empates usam a âncora mais baixa na pagina.",
+  "hierarquia": [
+    {
+      "cargo": "REITOR",
+      "termos": ["reitor", "reitora"]
+    },
+    {
+      "cargo": "VICE_REITOR",
+      "termos": ["vice-reitor", "vice-reitora"]
+    },
+    {
+      "cargo": "PRO_REITOR",
+      "termos": ["pro-reitor", "pro-reitora"]
+    },
+    {
+      "cargo": "DIRETOR_GERAL",
+      "termos": ["diretor-geral", "diretora-geral"]
+    },
+    {
+      "cargo": "DIRETOR",
+      "termos": ["diretor", "diretora"]
+    },
+    {
+      "cargo": "SECRETARIO_ACADEMICO",
+      "termos": ["secretario", "secretaria"]
+    },
+    {
+      "cargo": "COORDENADOR_ACADEMICO",
+      "termos": ["coordenador", "coordenadora"]
+    }
+  ]
+}

@@ -4,17 +4,17 @@ import unicodedata
 from collections.abc import Iterable, Iterator
 from pathlib import Path
 
-from source.services.ai_client import AIClientError, AiClient
+from source.services.ai_client import AIClientError, AIClient
 from source.services.image_service import image_to_base64, image_to_data_url
 
 
 class ExtractField:
     def __init__(
-            self,
-            client: AiClient,
-            image_path: str | Path,
-            model: str,
-            field_names: Iterable[str] | None = None,
+        self,
+        client: AIClient,
+        image_path: str | Path,
+        model: str,
+        field_names: Iterable[str] | None = None,
     ):
         self.client = client
         self.image_path = Path(image_path)
@@ -22,9 +22,9 @@ class ExtractField:
         self.field_names = list(field_names) if field_names is not None else None
 
     def extract(
-            self,
-            prompt: str | Path | None = None,
-            field_names: Iterable[str] | None = None,
+        self,
+        prompt: str | Path | None = None,
+        field_names: Iterable[str] | None = None,
     ) -> dict:
         return self.extract_image(
             client=self.client,
@@ -35,10 +35,10 @@ class ExtractField:
         )
 
     def extract_many(
-            self,
-            image_paths: Iterable[str | Path],
-            prompt: str | Path | None = None,
-            field_names: Iterable[str] | None = None,
+        self,
+        image_paths: Iterable[str | Path],
+        prompt: str | Path | None = None,
+        field_names: Iterable[str] | None = None,
     ) -> Iterator[dict]:
         yield from self.extract_images(
             client=self.client,
@@ -50,11 +50,11 @@ class ExtractField:
 
     @staticmethod
     def extract_image(
-            client: AiClient,
-            image_path: str | Path,
-            model: str,
-            prompt: str | Path | None = None,
-            field_names: Iterable[str] | None = None,
+        client: AIClient,
+        image_path: str | Path,
+        model: str,
+        prompt: str | Path | None = None,
+        field_names: Iterable[str] | None = None,
     ) -> dict:
         image_path = Path(image_path)
 
@@ -118,11 +118,11 @@ class ExtractField:
 
     @staticmethod
     def extract_images(
-            client: AiClient,
-            image_paths: Iterable[str | Path],
-            model: str,
-            prompt: str | Path | None = None,
-            field_names: Iterable[str] | None = None,
+        client: AIClient,
+        image_paths: Iterable[str | Path],
+        model: str,
+        prompt: str | Path | None = None,
+        field_names: Iterable[str] | None = None,
     ) -> Iterator[dict]:
         for image_path in image_paths:
             result = ExtractField.extract_image(
@@ -138,10 +138,10 @@ class ExtractField:
 
     @staticmethod
     def extract_course_image(
-            client: AiClient,
-            image_path: str | Path,
-            model: str,
-            prompt: str | Path | None = None,
+        client: AIClient,
+        image_path: str | Path,
+        model: str,
+        prompt: str | Path | None = None,
     ) -> dict:
         result = ExtractField.extract_image(
             client=client,
@@ -155,10 +155,10 @@ class ExtractField:
 
     @staticmethod
     def extract_course_images(
-            client: AiClient,
-            image_paths: Iterable[str | Path],
-            model: str,
-            prompt: str | Path | None = None,
+        client: AIClient,
+        image_paths: Iterable[str | Path],
+        model: str,
+        prompt: str | Path | None = None,
     ) -> Iterator[dict]:
         for image_path in image_paths:
             result = ExtractField.extract_course_image(
@@ -200,17 +200,19 @@ class ExtractField:
     def _normalize_field_name(value: str) -> str:
         normalized = unicodedata.normalize("NFKD", str(value))
         without_accents = "".join(
-            char for char in normalized
-            if not unicodedata.combining(char)
+            char for char in normalized if not unicodedata.combining(char)
         )
         return without_accents.casefold().strip()
 
     @staticmethod
-    def _normalize_value(value: object) -> str | None:
+    def _normalize_value(value: object) -> object | None:
         if value is None:
             return None
 
-        value = str(value).strip()
+        if not isinstance(value, str):
+            return value
+
+        value = value.strip()
         if value == "":
             return None
 
@@ -240,11 +242,11 @@ class ExtractField:
 
     @staticmethod
     def _build_result(
-            image_path: Path,
-            model: str,
-            fields: dict,
-            raw_response: str,
-            error: str | None,
+        image_path: Path,
+        model: str,
+        fields: dict,
+        raw_response: str,
+        error: str | None,
     ) -> dict:
         return {
             "document_name": image_path.name,
@@ -274,8 +276,8 @@ class ExtractField:
 
     @staticmethod
     def _load_structured_response(
-            content: str,
-            field_names: list[str] | None = None,
+        content: str,
+        field_names: list[str] | None = None,
     ) -> dict | None:
         data = ExtractField._load_json_response(content)
         if data is not None:
@@ -305,27 +307,74 @@ class ExtractField:
         if json_start == -1:
             return None
 
-        try:
-            data, _ = json.JSONDecoder().raw_decode(content[json_start:])
-        except json.decoder.JSONDecodeError:
-            return None
+        json_content = content[json_start:]
+        for candidate in (
+            json_content,
+            ExtractField._escape_control_characters_in_json_strings(json_content),
+        ):
+            try:
+                data, _ = json.JSONDecoder().raw_decode(candidate)
+            except json.decoder.JSONDecodeError:
+                continue
 
-        if not isinstance(data, dict):
-            return None
+            if isinstance(data, dict):
+                return data
 
-        return data
+        return None
 
     @staticmethod
     def _parse_json_object(content: str) -> dict | None:
-        try:
-            data = json.loads(content)
-        except json.decoder.JSONDecodeError:
-            return None
+        for candidate in (
+            content,
+            ExtractField._escape_control_characters_in_json_strings(content),
+        ):
+            try:
+                data = json.loads(candidate)
+            except json.decoder.JSONDecodeError:
+                continue
 
-        if not isinstance(data, dict):
-            return None
+            if isinstance(data, dict):
+                return data
 
-        return data
+        return None
+
+    @staticmethod
+    def _escape_control_characters_in_json_strings(content: str) -> str:
+        """Corrige quebras literais que alguns modelos inserem em strings JSON."""
+        escaped_content: list[str] = []
+        in_string = False
+        previous_was_escape = False
+
+        for char in content:
+            if not in_string:
+                escaped_content.append(char)
+                if char == '"':
+                    in_string = True
+                continue
+
+            if previous_was_escape:
+                escaped_content.append(char)
+                previous_was_escape = False
+                continue
+
+            if char == "\\":
+                escaped_content.append(char)
+                previous_was_escape = True
+            elif char == '"':
+                escaped_content.append(char)
+                in_string = False
+            elif char == "\n":
+                escaped_content.append("\\n")
+            elif char == "\r":
+                escaped_content.append("\\r")
+            elif char == "\t":
+                escaped_content.append("\\t")
+            elif ord(char) < 0x20:
+                escaped_content.append(f"\\u{ord(char):04x}")
+            else:
+                escaped_content.append(char)
+
+        return "".join(escaped_content)
 
     @staticmethod
     def _extract_fenced_json(content: str) -> str | None:
@@ -341,8 +390,8 @@ class ExtractField:
 
     @staticmethod
     def _load_markdown_fields(
-            content: str,
-            field_names: list[str] | None,
+        content: str,
+        field_names: list[str] | None,
     ) -> dict:
         if not field_names:
             return {}
@@ -363,11 +412,13 @@ class ExtractField:
 
     @staticmethod
     def _build_messages(
-            client: AiClient,
-            image_path: str | Path,
-            prompt: str,
+        client: AIClient,
+        image_path: str | Path,
+        prompt: str,
     ) -> list[dict]:
-        chat_path = getattr(getattr(client, "config", None), "chat_completions_path", "")
+        chat_path = getattr(
+            getattr(client, "config", None), "chat_completions_path", ""
+        )
 
         if "ollama" in chat_path:
             return [
@@ -396,6 +447,3 @@ class ExtractField:
                 ],
             }
         ]
-
-
-ExtractCourse = ExtractField

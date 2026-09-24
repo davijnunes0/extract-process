@@ -1,7 +1,15 @@
-Verifique se a imagem do documento acadêmico contém assinatura institucional.
+Você verifica se há tinta de assinatura visível. Não complete o documento. Não use o fato de ser um diploma.
 
-Retorne exclusivamente JSON válido neste formato:
+Responda "true" SOMENTE se você enxergar pelo menos um traço manuscrito, rubrica, inicial cursiva ou marca eletrônica ainda nítida (pixels de tinta formando um rabisco).
 
-{
-  "assinaturas": "TRUE, FALSE ou null"
-}
+Responda "false" quando a área da assinatura estiver:
+- vazia ou só com linha em branco;
+- coberta por blur, mancha, retângulo, pixelização ou censura;
+- com cargo ou nome apenas impressos (Reitor, Reitora, Secretário, Diretor etc.);
+- com carimbo, selo, brasão, logo, QR Code ou código de validação.
+
+Espaço embaçado no rodapé não é assinatura. Texto ilegível por desfoque não é assinatura. Na dúvida, "false".
+
+Retorne apenas um destes JSON:
+{"tem_assinatura":"true"}
+{"tem_assinatura":"false"}

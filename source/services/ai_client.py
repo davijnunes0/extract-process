@@ -11,8 +11,10 @@ import requests
 
 logger = logging.getLogger(__name__)
 
+
 class AIClientError(RuntimeError):
-     """Erro base do cliente de IA."""
+    """Erro base do cliente de IA."""
+
 
 class AIAuthError(AIClientError):
     """Erro relacionado á autenticação"""
@@ -21,7 +23,7 @@ class AIAuthError(AIClientError):
 # O decorador @dataclasss(frozen=True) em Python transforma uma classe em uma estrutura de dados otimizada (com métodos __init__ e __repr__ gerados
 # automaticamente) e "torna os objetos imutáveis"
 @dataclass(frozen=True)
-class AiClientConfig:
+class AIClientConfig:
     base_url: str
     email: str | None
     password: str | None
@@ -32,22 +34,25 @@ class AiClientConfig:
     login_retries: int
     login_backoff_sec: float
     renew_delay_sec: float
+    request_retries: int
+    request_backoff_sec: float
 
-class AiClient:
+
+class AIClient:
     """
-        Cliente HTTP compátivel com:
+    Cliente HTTP compátivel com:
 
-        client.chat.completions.create(
-            model="...",
-            messages=[...]
-        )
+    client.chat.completions.create(
+        model="...",
+        messages=[...]
+    )
 
-        Suporta:
-        - token via parâmetro bearer_token
-        - token na UR: ?token=...
-        - token via variável OPENAI_BEARER_TOKEN
-        - login via email/senha em /api/v1qauths/signin
-        - renovação de token após 401
+    Suporta:
+    - token via parâmetro bearer_token
+    - token na UR: ?token=...
+    - token via variável OPENAI_BEARER_TOKEN
+    - login via email/senha em /api/v1qauths/signin
+    - renovação de token após 401
     """
 
     def __init__(
@@ -56,12 +61,12 @@ class AiClient:
         email: str | None = None,
         password: str | None = None,
         bearer_token: str | None = None,
-        timeout: int = 30,
+        timeout: int = 300,
         chat_completions_path: str = "/v1/chat/completions",
     ):
         clean_base_url, token_from_url = self._extract_token_from_url(base_url)
 
-        self.config = AiClientConfig(
+        self.config = AIClientConfig(
             base_url=clean_base_url.rstrip("/"),
             email=(
                 email
@@ -73,7 +78,9 @@ class AiClient:
                 or os.getenv("OPENAI_BEARER_PASSWORD")
                 or os.getenv("OPENAI_API_PASSWORD")
             ),
-            bearer_token=bearer_token or os.getenv("OPENAI_BEARER_TOKEN") or token_from_url,
+            bearer_token=bearer_token
+            or os.getenv("OPENAI_BEARER_TOKEN")
+            or token_from_url,
             timeout=int(
                 timeout
                 or os.getenv("OPENAI_BEARER_TIMEOUT")
@@ -90,6 +97,8 @@ class AiClient:
             login_retries=int(os.getenv("OPENAI_LOGIN_RETRIES", 3)),
             login_backoff_sec=float(os.getenv("OPENAI_LOGIN_BACKOFF_SEC", 15)),
             renew_delay_sec=float(os.getenv("OPENAI_401_RENEW_DELAY_SEC", 5)),
+            request_retries=int(os.getenv("OPENAI_REQUEST_RETRIES", 2)),
+            request_backoff_sec=float(os.getenv("OPENAI_REQUEST_BACKOFF_SEC", 5)),
         )
 
         self.session = requests.Session()
@@ -103,12 +112,12 @@ class AiClient:
     @staticmethod
     def _extract_token_from_url(base_url: str) -> tuple[str, str | None]:
         """
-            Extrai token de uma URL no formato:
-                https://exemplo.com?token=JWT
-                https://exemplo.com?access_token=JWT
+        Extrai token de uma URL no formato:
+            https://exemplo.com?token=JWT
+            https://exemplo.com?access_token=JWT
 
-            Retorna:
-                (url_sem_query,token)
+        Retorna:
+            (url_sem_query,token)
         """
 
         if not base_url:
@@ -149,12 +158,12 @@ class AiClient:
 
     def _get_token(self) -> str | None:
         """
-            Retorna um token válido.
+        Retorna um token válido.
 
-            Ordem de prioridade:
-            1. Token em cache
-            2. Token fornecido por parâmetro, URL ou variável de ambiente
-            3. Login com email/senha
+        Ordem de prioridade:
+        1. Token em cache
+        2. Token fornecido por parâmetro, URL ou variável de ambiente
+        3. Login com email/senha
         """
         with self._token_lock:
             if self._cached_token:
@@ -228,12 +237,12 @@ class AiClient:
         return headers
 
     def create_completion(
-            self,
-            model: str,
-            messages: list[dict[str, Any]],
-            temperature: float = 1,
-            max_retries: int = 1,
-            **kwargs: Any,
+        self,
+        model: str,
+        messages: list[dict[str, Any]],
+        temperature: float = 1,
+        max_retries: int | None = None,
+        **kwargs: Any,
     ) -> SimpleNamespace:
         """
         Chama o endpoint de chat completions.
@@ -257,23 +266,57 @@ class AiClient:
 
         headers = self._build_headers()
 
-        for attempt in range(max_retries + 1):
-            response = self.session.post(
-                url,
-                headers=headers,
-                json=payload,
-                timeout=self.config.timeout,
-            )
+        retries = self.config.request_retries if max_retries is None else max_retries
+
+        for attempt in range(retries + 1):
+            try:
+                response = self.session.post(
+                    url,
+                    headers=headers,
+                    json=payload,
+                    timeout=self.config.timeout,
+                )
+            except requests.Timeout as exc:
+                if attempt < retries:
+                    self._sleep_before_request_retry(attempt, retries, exc)
+                    continue
+                raise AIClientError(
+                    f"Timeout após {self.config.timeout}s ao chamar chat completions "
+                    f"({retries + 1} tentativa(s))."
+                ) from exc
+            except requests.ConnectionError as exc:
+                if attempt < retries:
+                    self._sleep_before_request_retry(attempt, retries, exc)
+                    continue
+                raise AIClientError(
+                    f"Falha de conexão ao chamar chat completions "
+                    f"({retries + 1} tentativa(s)): {exc}"
+                ) from exc
+            except requests.RequestException as exc:
+                raise AIClientError(
+                    f"Erro HTTP ao chamar chat completions: {exc}"
+                ) from exc
 
             if response.ok:
                 return self._parse_completion_response(response)
 
-            can_retry_auth = response.status_code == 401 and attempt < max_retries
+            can_retry_auth = response.status_code == 401 and attempt < retries
 
             if can_retry_auth:
                 self._wait_before_token_renew()
                 self._reset_token()
                 headers = self._build_headers()
+                continue
+
+            is_transient_error = (
+                response.status_code == 429 or response.status_code >= 500
+            )
+            if is_transient_error and attempt < retries:
+                self._sleep_before_request_retry(
+                    attempt,
+                    retries,
+                    f"HTTP {response.status_code}",
+                )
                 continue
 
             raise AIClientError(
@@ -282,7 +325,6 @@ class AiClient:
             )
 
         raise AIClientError("Falha inesperada ao chamar chat completions.")
-
 
     @staticmethod
     def _parse_completion_response(response: requests.Response) -> SimpleNamespace:
@@ -308,9 +350,7 @@ class AiClient:
                 content = message.get("content", "")
 
                 choices.append(
-                    SimpleNamespace(
-                        message=SimpleNamespace(content=content)
-                    )
+                    SimpleNamespace(message=SimpleNamespace(content=content))
                 )
 
             return SimpleNamespace(choices=choices, raw=data)
@@ -319,22 +359,14 @@ class AiClient:
         if isinstance(message, dict):
             content = message.get("content", "")
             return SimpleNamespace(
-                choices=[
-                    SimpleNamespace(
-                        message=SimpleNamespace(content=content)
-                    )
-                ],
+                choices=[SimpleNamespace(message=SimpleNamespace(content=content))],
                 raw=data,
             )
 
         content = data.get("response")
         if isinstance(content, str):
             return SimpleNamespace(
-                choices=[
-                    SimpleNamespace(
-                        message=SimpleNamespace(content=content)
-                    )
-                ],
+                choices=[SimpleNamespace(message=SimpleNamespace(content=content))],
                 raw=data,
             )
 
@@ -354,10 +386,7 @@ class AiClient:
     def _is_rate_limited(response: requests.Response) -> bool:
         body = response.text or ""
 
-        return (
-            response.status_code == 429
-            or "rate limit" in body.lower()
-        )
+        return response.status_code == 429 or "rate limit" in body.lower()
 
     def _sleep_before_login_retry(self, attempt: int) -> None:
         if attempt >= self.config.login_retries:
@@ -366,8 +395,7 @@ class AiClient:
         wait_seconds = self.config.login_backoff_sec * attempt
 
         logger.warning(
-            "Rate limit no login. Aguardando %.0fs antes de tentar novamente "
-            "(%d/%d).",
+            "Rate limit no login. Aguardando %.0fs antes de tentar novamente (%d/%d).",
             wait_seconds,
             attempt,
             self.config.login_retries,
@@ -386,6 +414,24 @@ class AiClient:
 
         time.sleep(float(self.config.renew_delay_sec))
 
+    def _sleep_before_request_retry(
+        self,
+        attempt: int,
+        retries: int,
+        reason: object,
+    ) -> None:
+        wait_seconds = self.config.request_backoff_sec * (attempt + 1)
+
+        logger.warning(
+            "Falha transitória na requisição (%s). Aguardando %.0fs antes "
+            "da tentativa %d/%d.",
+            reason,
+            wait_seconds,
+            attempt + 2,
+            retries + 1,
+        )
+        if wait_seconds > 0:
+            time.sleep(wait_seconds)
 
     def close(self) -> None:
         self.session.close()

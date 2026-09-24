@@ -59,22 +59,16 @@ Formato base de cada resultado:
     "model": "gemma4:31b",
     "task": "curso",
     "prompt_variant": "detailed_rules",
-    "fields": {
-        "curso": "Nome do curso extraído"
-    },
+    "fields": {"curso": "Nome do curso extraído"},
     "raw_response": "{...}",
-    "error": None
+    "error": None,
 }
 ```
 
 O projeto ainda mantém chaves de compatibilidade com o formato anterior:
 
 ```python
-{
-    "campos": {...},
-    "resposta_bruta": "...",
-    "erro": None
-}
+{"campos": {...}, "resposta_bruta": "...", "erro": None}
 ```
 
 ## Estrutura do Projeto
@@ -170,6 +164,10 @@ Utilitários para imagens:
 - conversão para Data URL;
 - iteração ordenada sobre arquivos de imagem.
 
+### Fluxo de assinaturas
+
+O fluxo de localização, recorte, verificação e auditoria de assinaturas está documentado em [FLUXO_ASSINATURAS.md](FLUXO_ASSINATURAS.md).
+
 ### `source/services/evaluation_service.py`
 
 Avalia as extrações usando um gabarito em `answer_key.js`.
@@ -215,7 +213,7 @@ source/prompts/curso/zero_shot.txt
 Por padrão, as funções usam:
 
 ```python
-prompt_variant="detailed_rules"
+prompt_variant = "detailed_rules"
 ```
 
 Para testar zero-shot:
@@ -240,7 +238,9 @@ OPENAI_API_BASE=http://localhost:8081
 OPENAI_API_USERNAME=seu-email
 OPENAI_API_PASSWORD=sua-senha
 OPENAI_CHAT_PATH=/ollama/api/chat
-OPENAI_TIMEOUT_SECONDS=1800
+OPENAI_TIMEOUT_SECONDS=300
+OPENAI_REQUEST_RETRIES=2
+OPENAI_REQUEST_BACKOFF_SEC=5
 
 MONGO_URI=mongodb://localhost:27017
 MONGO_DATABASE=course_extract
@@ -254,6 +254,8 @@ Variáveis usadas pelo cliente de IA:
 - `OPENAI_BEARER_TOKEN`
 - `OPENAI_CHAT_PATH`
 - `OPENAI_TIMEOUT_SECONDS`
+- `OPENAI_REQUEST_RETRIES`
+- `OPENAI_REQUEST_BACKOFF_SEC`
 - `OPENAI_LOGIN_RETRIES`
 - `OPENAI_LOGIN_BACKOFF_SEC`
 - `OPENAI_401_RENEW_DELAY_SEC`
@@ -356,11 +358,9 @@ Documento recomendado para persistência:
     "task": "curso",
     "prompt_variant": "zero_shot",
     "model": "gemma4:31b",
-    "fields": {
-        "curso": "Engenharia de Software"
-    },
+    "fields": {"curso": "Engenharia de Software"},
     "raw_response": "{...}",
-    "error": None
+    "error": None,
 }
 ```
 
